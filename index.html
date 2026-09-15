@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>سرٌّ لأخي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep-teal: #0b2e2f;
+    --teal: #12403d;
+    --teal-light: #1f6f5c;
+    --gold: #c9a227;
+    --gold-light: #f0d27a;
+    --cream: #f7f2e7;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0; height:100%;
+    font-family: 'Tajawal', sans-serif;
+    color: var(--cream);
+    overflow: hidden;
+  }
+
+  body{
+    background: linear-gradient(160deg, #0d3634, #081f20 60%, #061615);
+    background-size: 200% 200%;
+    animation: drift 14s ease-in-out infinite;
+  }
+
+  @keyframes drift{
+    0%,100%{ background-position: 0% 0%; }
+    50%{ background-position: 100% 100%; }
+  }
+
+  .stage{
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* soft dotted texture */
+  .stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: radial-gradient(var(--gold) 0.6px, transparent 0.6px);
+    background-size: 26px 26px;
+    opacity: 0.05;
+    pointer-events:none;
+  }
+
+  /* floating particles container, populated by JS on reveal */
+  #particles{
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index: 0;
+  }
+
+  .particle{
+    position:absolute;
+    bottom: -40px;
+    font-size: 18px;
+    color: var(--gold-light);
+    opacity: 0;
+    animation: floatUp linear forwards;
+  }
+
+  @keyframes floatUp{
+    0%{ opacity: 0; transform: translateY(0) rotate(0deg); }
+    10%{ opacity: 0.9; }
+    90%{ opacity: 0.7; }
+    100%{ opacity: 0; transform: translateY(-100vh) rotate(180deg); }
+  }
+
+  .card{
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    z-index: 1;
+  }
+
+  .panel{
+    position: relative;
+    border-radius: 20px;
+    border: 1px solid rgba(201,162,39,0.5);
+    background: linear-gradient(160deg, #123f3d, #0b2725 75%);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(201,162,39,0.05);
+    padding: 40px 28px 32px;
+    text-align: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .panel::before{
+    content:"";
+    position:absolute; inset: 10px;
+    border: 1px solid rgba(201,162,39,0.28);
+    border-radius: 14px;
+    pointer-events:none;
+  }
+
+  #frontPanel.hidden, #backPanel.hidden{
+    display:none;
+  }
+
+  .seal{
+    width: 60px; height: 60px;
+    margin: 0 auto 22px;
+    border: 1.5px solid var(--gold);
+    border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 24px;
+    color: var(--gold-light);
+    box-shadow: 0 0 22px rgba(201,162,39,0.25);
+  }
+
+  .eyebrow{
+    font-size: 12.5px;
+    letter-spacing: 0.5px;
+    color: rgba(247,242,231,0.5);
+    margin-bottom: 10px;
+  }
+
+  .front-title{
+    font-family: 'Amiri', serif;
+    font-size: 26px;
+    color: var(--gold-light);
+    line-height: 1.6;
+    margin: 0 0 28px;
+  }
+
+  .pin-wrap{
+    display:flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 18px;
+    direction: ltr;
+  }
+
+  .pin-box{
+    width: 42px; height: 52px;
+    border-radius: 10px;
+    border: 1px solid rgba(201,162,39,0.4);
+    background: rgba(0,0,0,0.2);
+    color: var(--cream);
+    font-size: 22px;
+    text-align: center;
+    font-family: 'Tajawal', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .pin-box:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,162,39,0.18);
+  }
+
+  .pin-box.filled{
+    border-color: var(--gold-light);
+  }
+
+  .shake{
+    animation: shake 0.45s ease;
+  }
+
+  @keyframes shake{
+    0%, 100%{ transform: translateX(0); }
+    20%{ transform: translateX(-8px); }
+    40%{ transform: translateX(8px); }
+    60%{ transform: translateX(-6px); }
+    80%{ transform: translateX(6px); }
+  }
+
+  .error-msg{
+    font-size: 13px;
+    color: #e28a8a;
+    height: 18px;
+    margin-bottom: 8px;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .error-msg.show{ opacity: 1; }
+
+  .open-btn{
+    margin-top: 8px;
+    padding: 12px 34px;
+    border-radius: 999px;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold-light);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s, transform 0.15s;
+  }
+
+  .open-btn:hover{
+    background: var(--gold);
+    color: #0b2725;
+  }
+
+  .open-btn:active{
+    transform: scale(0.97);
+  }
+
+  .hint{
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: rgba(247,242,231,0.4);
+  }
+
+  /* back / reveal panel */
+  #backPanel{
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  #backPanel.show{
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .glow-ring{
+    width: 84px; height: 84px;
+    margin: 0 auto 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 34px;
+    color: var(--gold-light);
+    box-shadow: 0 0 0 rgba(201,162,39,0.4);
+    animation: pulseRing 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulseRing{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(201,162,39,0.35); }
+    50%{ box-shadow: 0 0 0 14px rgba(201,162,39,0); }
+  }
+
+  .message{
+    font-family: 'Aref Ruqaa', 'Amiri', serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1.6;
+    margin: 6px 0 0;
+    direction: rtl;
+    unicode-bidi: plaintext;
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
+    filter: blur(6px);
+    animation: messageIn 1s cubic-bezier(.2,.8,.3,1) forwards;
+    animation-delay: 0.35s;
+  }
+
+  @keyframes messageIn{
+    to{
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .message.settled{
+    animation: messageIn 1s cubic-bezier(.2,.8,.3,1) forwards, glowBreathe 3.2s ease-in-out infinite;
+    animation-delay: 0.35s, 1.6s;
+  }
+
+  @keyframes glowBreathe{
+    0%,100%{ text-shadow: 0 0 16px rgba(240,210,122,0.35); }
+    50%{ text-shadow: 0 0 32px rgba(240,210,122,0.8); }
+  }
+
+  .footer{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(6,22,21,0.85), rgba(6,22,21,0));
+  }
+
+  .footer-text{
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.4px;
+    color: rgba(247,242,231,0.4);
+  }
+
+  .yt-link{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    color: rgba(247,242,231,0.4);
+    border: 1px solid rgba(201,162,39,0.25);
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s, transform 0.2s;
+  }
+
+  .yt-link:hover{
+    color: var(--gold-light);
+    border-color: var(--gold);
+    transform: scale(1.08);
+  }
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<div class="stage">
+  <div class="card">
+
+    <div class="panel" id="frontPanel">
+      <div class="seal">🍯</div>
+      <div class="eyebrow">رسالة خاصة</div>
+      <div class="front-title">أخي، أخبأتُ لك سراً</div>
+
+      <div class="pin-wrap" id="pinWrap">
+        <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" data-i="0">
+        <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" data-i="1">
+        <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" data-i="2">
+        <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" data-i="3">
+        <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" data-i="4">
+      </div>
+
+      <div class="error-msg" id="errorMsg">كلمة السر غير صحيحة، حاول مجدداً</div>
+
+      <button class="open-btn" id="openBtn">اكشف السر</button>
+      <div class="hint">أدخل كلمة السر ثم اضغط "اكشف السر"</div>
+    </div>
+
+    <div class="panel hidden" id="backPanel">
+      <div class="glow-ring">❤</div>
+      <div class="message" id="messageText"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <span class="footer-text">© تطبيق صلِّ وادرس</span>
+  <a class="yt-link" href="https://youtube.com/@mujahidelkurdi?si=VNQCsRqkGvQm2tIw" target="_blank" rel="noopener" aria-label="قناة اليوتيوب">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
+      <path d="M23.5 6.2c-.28-1.05-1.1-1.88-2.15-2.16C19.44 3.5 12 3.5 12 3.5s-7.44 0-9.35.54C1.6 4.32.78 5.15.5 6.2 0 8.13 0 12 0 12s0 3.87.5 5.8c.28 1.05 1.1 1.88 2.15 2.16C4.56 20.5 12 20.5 12 20.5s7.44 0 9.35-.54c1.05-.28 1.87-1.11 2.15-2.16.5-1.93.5-5.8.5-5.8s0-3.87-.5-5.8zM9.6 15.5v-7l6.4 3.5-6.4 3.5z"/>
+    </svg>
+  </a>
+</div>
+
+<script>
+  const PASSWORD = "24434";
+  const boxes = Array.from(document.querySelectorAll('.pin-box'));
+  const openBtn = document.getElementById('openBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const pinWrap = document.getElementById('pinWrap');
+  const frontPanel = document.getElementById('frontPanel');
+  const backPanel = document.getElementById('backPanel');
+  const particles = document.getElementById('particles');
+
+  boxes.forEach((box, idx) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/[^0-9]/g, '');
+      if(box.value){
+        box.classList.add('filled');
+        if(idx < boxes.length - 1){ boxes[idx+1].focus(); }
+      } else {
+        box.classList.remove('filled');
+      }
+    });
+    box.addEventListener('keydown', (e) => {
+      if(e.key === 'Backspace' && !box.value && idx > 0){
+        boxes[idx-1].focus();
+      }
+      if(e.key === 'Enter'){ tryOpen(); }
+    });
+  });
+
+  openBtn.addEventListener('click', tryOpen);
+
+  function tryOpen(){
+    const entered = boxes.map(b => b.value).join('');
+    if(entered === PASSWORD){
+      reveal();
+    } else {
+      errorMsg.classList.add('show');
+      pinWrap.classList.add('shake');
+      setTimeout(() => pinWrap.classList.remove('shake'), 450);
+      boxes.forEach(b => { b.value=''; b.classList.remove('filled'); });
+      boxes[0].focus();
+    }
+  }
+
+  function reveal(){
+    frontPanel.classList.add('hidden');
+    backPanel.classList.remove('hidden');
+    requestAnimationFrame(() => backPanel.classList.add('show'));
+    animateMessage();
+    startParticles();
+  }
+
+  function animateMessage(){
+    const el = document.getElementById('messageText');
+    el.textContent = "أحبك في الله";
+    el.classList.remove('settled');
+    // trigger reflow so the entrance animation replays each time
+    void el.offsetWidth;
+    setTimeout(() => el.classList.add('settled'), 1500);
+  }
+
+  function startParticles(){
+    const symbols = ['❤'];
+    const count = 22;
+    for(let i=0; i<count; i++){
+      setTimeout(() => {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+        p.style.left = Math.random()*100 + '%';
+        p.style.fontSize = (12 + Math.random()*14) + 'px';
+        p.style.animationDuration = (5 + Math.random()*4) + 's';
+        particles.appendChild(p);
+        setTimeout(() => p.remove(), 10000);
+      }, i * 180);
+    }
+    // keep a gentle continuous stream
+    setInterval(() => {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+      p.style.left = Math.random()*100 + '%';
+      p.style.fontSize = (12 + Math.random()*14) + 'px';
+      p.style.animationDuration = (5 + Math.random()*4) + 's';
+      particles.appendChild(p);
+      setTimeout(() => p.remove(), 10000);
+    }, 900);
+  }
+
+  boxes[0].focus();
+</script>
+
+</body>
+</html>
